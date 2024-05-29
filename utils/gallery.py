@@ -14,6 +14,8 @@ class Directories(Enum):
     Music = './Music/'
     Fonts = './Fonts/'
 
+valid_exts = ['.mp4']
+
 def check_param(param: Directories) -> bool:
     return isinstance(param, Directories)
 
@@ -22,6 +24,12 @@ def check_directories() -> bool:
 
 def verify_file(file_name: str, type: Directories) -> bool:
     return os.path.exists(type.value + file_name)
+
+def check_extension(file_name: str):
+    for ext in valid_exts:
+        if file_name.endswith(ext): return True
+    
+    return False
 
 def retrieve_Files(type: Directories) -> list[str]:
     if check_param(type) is False: raise Exception

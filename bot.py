@@ -26,6 +26,10 @@ async def ping(interaction: discord.Interaction):
 
 @bot.tree.command(name='create', description='Creates a new video for you.')
 async def create(interaction: discord.Interaction, raw_clip: discord.Attachment, video: str, music: str, font: str):
+    if gallery.check_extension(raw_clip.filename) is False: 
+        await interaction.response.send_message(content="The sent file hasn't got a supported extension, list of supported extensions: " + str(gallery.valid_exts), ephemeral=True)
+        return
+    
     await gallery.save_raw_file(raw_clip, interaction.user.id)
     
     if gallery.verify_file(type=gallery.Directories.Clips, file_name=video) and gallery.verify_file(type=gallery.Directories.Music, file_name=music) and gallery.verify_file(type=gallery.Directories.Fonts, file_name=font):
