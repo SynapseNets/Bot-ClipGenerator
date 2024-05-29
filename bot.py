@@ -1,4 +1,6 @@
-import discord, requests, os, utils.gallery as gallery
+import discord, requests, os
+import utils.gallery as gallery
+import utils.editor as editor
 from discord.ext import commands, tasks
 from discord import app_commands, ui
 from dotenv import load_dotenv
@@ -19,7 +21,7 @@ class Modal_TextSettings(ui.Modal, title='Text Settings'):
 
     async def on_submit(self, interaction: discord.Interaction):
         await interaction.response.send_message(f'Settings received, the result video will be sent to you shortly.', ephemeral=True)
-
+        
 @bot.tree.command(name='ping', description='Replies with pong!')
 async def ping(interaction: discord.Interaction):
     await interaction.response.send_message(f"pong! requested by {interaction.user.mention}")
@@ -30,10 +32,13 @@ async def create(interaction: discord.Interaction, raw_clip: discord.Attachment,
         await interaction.response.send_message(content="The sent file hasn't got a supported extension, list of supported extensions: " + str(gallery.valid_exts), ephemeral=True)
         return
     
-    await gallery.save_raw_file(raw_clip, interaction.user.id)
+    raw_file = await gallery.save_raw_file(raw_clip, interaction.user.id)
     
     if gallery.verify_file(type=gallery.Directories.Clips, file_name=video) and gallery.verify_file(type=gallery.Directories.Music, file_name=music) and gallery.verify_file(type=gallery.Directories.Fonts, file_name=font):
-        await interaction.response.send_modal(Modal_TextSettings())
+        # await interaction.response.send_modal(Modal_TextSettings())
+        await interaction.response.send_message('Hey this is the file you asked!', ephemeral=True)
+        path = editor.crop_video(raw_file, os.path.join(os.getcwd(), f'Clips/{video}'))
+        await interaction.channel.send(file=discord.File(path))
     else: 
         await interaction.response.send_message("Invalid input.")
 
@@ -52,5 +57,14 @@ async def autocomplete_callback(interaction: discord.Interaction, current: str):
 
 
 if __name__ == "__main__":
+    # seems we dont use docker
+    try:
+        os.mkdir("temp")
+    except:
+        pass
+    try:
+        os.mkdir("videos")
+    except:
+        pass
     load_dotenv()
     bot.run(os.getenv('token'))

@@ -44,4 +44,6 @@ def get_Choices(type: Directories, criteria: str) -> list[app_commands.Choice]:
     return results
 
 async def save_raw_file(raw_clip: Attachment, user_id: int):
-    await raw_clip.save(os.path.join(os.getcwd(), '/temp/' + str(user_id) + '-' + os.urandom(8).hex() + ".mp4"))
+    path = os.path.join(os.getcwd(), 'temp/' + str(user_id) + '-' + os.urandom(8).hex() + ".mp4")
+    await raw_clip.save(path)
+    return path
