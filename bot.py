@@ -1,4 +1,4 @@
-import discord, requests, os, gallery, typing
+import discord, requests, os, utils.gallery as gallery
 from discord.ext import commands, tasks
 from discord import app_commands, ui
 from dotenv import load_dotenv
@@ -26,7 +26,7 @@ async def ping(interaction: discord.Interaction):
 
 @bot.tree.command(name='create', description='Creates a new video for you.')
 async def create(interaction: discord.Interaction, raw_clip: discord.Attachment, video: str, music: str, font: str):
-    await raw_clip.save('./' + str(interaction.user.id) + raw_clip.filename)
+    await gallery.save_raw_file(raw_clip, interaction.user.id)
     
     if gallery.verify_file(type=gallery.Directories.Clips, file_name=video) and gallery.verify_file(type=gallery.Directories.Music, file_name=music) and gallery.verify_file(type=gallery.Directories.Fonts, file_name=font):
         await interaction.response.send_modal(Modal_TextSettings())

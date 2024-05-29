@@ -5,9 +5,9 @@ This file contains all the functions used to retrieve the files in the 3 folders
 - Fonts
 '''
 
-import os, typing
+import os
 from enum import Enum
-from discord import app_commands
+from discord import app_commands, Attachment
 
 class Directories(Enum):
     Clips = './Clips/'
@@ -34,3 +34,6 @@ def get_Choices(type: Directories, criteria: str) -> list[app_commands.Choice]:
         if criteria in file:
             results.append(app_commands.Choice(name=file, value=file))
     return results
+
+async def save_raw_file(raw_clip: Attachment, user_id: int):
+    await raw_clip.save(os.path.join(os.getcwd(), '/temp/' + str(user_id) + '-' + os.urandom(8).hex() + ".mp4"))
