@@ -39,8 +39,10 @@ async def create(interaction: discord.Interaction, raw_clip: discord.Attachment,
     if gallery.verify_file(type=gallery.Directories.Clips, file_name=video) and gallery.verify_file(type=gallery.Directories.Music, file_name=music) and gallery.verify_file(type=gallery.Directories.Fonts, file_name=font):
         # await interaction.response.send_modal(Modal_TextSettings())
         await interaction.followup.send(content='Hey this is the file you asked!', ephemeral=True)
-        path = editor.crop_video(raw_file, os.path.join(os.getcwd(), f'Clips/{video}'))
-        await interaction.channel.send(file=discord.File(path))
+        path = editor.crop_video(raw_file, os.path.join(os.getcwd(), f'clips/{video}'))
+        await interaction.followup.send(file=discord.File(path))
+        os.remove(path)
+        os.remove(raw_file) 
     else: 
         await interaction.followup.send(content="Invalid input.")
 

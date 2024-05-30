@@ -10,9 +10,9 @@ from enum import Enum
 from discord import app_commands, Attachment
 
 class Directories(Enum):
-    Clips = './Clips/'
-    Music = './Music/'
-    Fonts = './Fonts/'
+    Clips = './clips/'
+    Music = './music/'
+    Fonts = './fonts/'
 
 valid_exts = ['.mp4']
 

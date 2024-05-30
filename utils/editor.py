@@ -13,12 +13,12 @@ def crop_video(raw_clip: str, game_clip: str):
     assert w == 1080 and h == 1920
     raw = raw.crop(y1=h//4, y2=h//2+h//4)
     
-    game = game.resize(())
+    game = game.resize(newsize=(1080, 1920))
     (w, h) = game.size
     assert w == 1080 and h == 1920
     game = game.crop(y1=h//4, y2=h//2+h//4)
 
-
+    game.without_audio()
     video = clips_array([[raw], [game]])
 
     path = os.path.join(os.getcwd(), "videos/" + os.urandom(8).hex() + ".mp4")
