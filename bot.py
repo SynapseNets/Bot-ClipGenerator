@@ -28,19 +28,21 @@ async def ping(interaction: discord.Interaction):
 
 @bot.tree.command(name='create', description='Creates a new video for you.')
 async def create(interaction: discord.Interaction, raw_clip: discord.Attachment, video: str, music: str, font: str):
+    await interaction.response.defer()
+    
     if gallery.check_extension(raw_clip.filename) is False: 
-        await interaction.response.send_message(content="The sent file hasn't got a supported extension, list of supported extensions: " + str(gallery.valid_exts), ephemeral=True)
+        await interaction.followup.send(content="The sent file hasn't got a supported extension, list of supported extensions: " + str(gallery.valid_exts), ephemeral=True)
         return
     
     raw_file = await gallery.save_raw_file(raw_clip, interaction.user.id)
     
     if gallery.verify_file(type=gallery.Directories.Clips, file_name=video) and gallery.verify_file(type=gallery.Directories.Music, file_name=music) and gallery.verify_file(type=gallery.Directories.Fonts, file_name=font):
         # await interaction.response.send_modal(Modal_TextSettings())
-        await interaction.response.send_message('Hey this is the file you asked!', ephemeral=True)
+        await interaction.followup.send(content='Hey this is the file you asked!', ephemeral=True)
         path = editor.crop_video(raw_file, os.path.join(os.getcwd(), f'Clips/{video}'))
         await interaction.channel.send(file=discord.File(path))
     else: 
-        await interaction.response.send_message("Invalid input.")
+        await interaction.followup.send(content="Invalid input.")
 
 #autocomplete functions
 @create.autocomplete('video')
