@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='/', intents=intents)
+queue_videos = dict()
 
 @bot.event
 async def on_ready():
@@ -19,8 +20,20 @@ async def on_ready():
 class Modal_TextSettings(ui.Modal, title='Text Settings'):
     settings = ui.TextInput(label='Answer', style=discord.TextStyle.paragraph)
 
+    def __init__(self, raw_clip: discord.Attachment, gamevideo: str, music: str, font: str):
+        self.raw_clip = raw_clip
+        self.video = gamevideo
+        self.music = music
+        self.font = font
+        super().__init__()
+        
     async def on_submit(self, interaction: discord.Interaction):
-        await interaction.response.send_message(f'Settings received, the result video will be sent to you shortly.', ephemeral=True)
+        await interaction.response.defer()
+        
+        raw_file = await gallery.save_raw_file(self.raw_clip, interaction.user.id)
+
+        await interaction.followup.send(f'Settings received, the result video will be sent to you shortly.', ephemeral=True)
+        await editor.edit_and_send(raw_file, os.path.join(os.getcwd(), f'clips/{self.video}'), interaction.user)
         
 @bot.tree.command(name='ping', description='Replies with pong!')
 async def ping(interaction: discord.Interaction):
@@ -28,23 +41,15 @@ async def ping(interaction: discord.Interaction):
 
 @bot.tree.command(name='create', description='Creates a new video for you.')
 async def create(interaction: discord.Interaction, raw_clip: discord.Attachment, video: str, music: str, font: str):
-    await interaction.response.defer()
-    
+
     if gallery.check_extension(raw_clip.filename) is False: 
-        await interaction.followup.send(content="The sent file hasn't got a supported extension, list of supported extensions: " + str(gallery.valid_exts), ephemeral=True)
+        await interaction.response.send_message(content="The sent file hasn't got a supported extension, list of supported extensions: " + str(gallery.valid_exts), ephemeral=True)
         return
     
-    raw_file = await gallery.save_raw_file(raw_clip, interaction.user.id)
-    
     if gallery.verify_file(type=gallery.Directories.Clips, file_name=video) and gallery.verify_file(type=gallery.Directories.Music, file_name=music) and gallery.verify_file(type=gallery.Directories.Fonts, file_name=font):
-        # await interaction.response.send_modal(Modal_TextSettings())
-        await interaction.followup.send(content='Hey this is the file you asked!', ephemeral=True)
-        path = editor.crop_video(raw_file, os.path.join(os.getcwd(), f'clips/{video}'))
-        await interaction.followup.send(file=discord.File(path))
-        os.remove(path)
-        os.remove(raw_file) 
+        await interaction.response.send_modal(Modal_TextSettings(raw_clip, video, music, font))
     else: 
-        await interaction.followup.send(content="Invalid input.")
+        await interaction.response.send_message(content="Invalid input.")
 
 #autocomplete functions
 @create.autocomplete('video')
