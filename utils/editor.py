@@ -1,7 +1,7 @@
 '''
 This file contains all the functions used to crop the input podcast and the selected video.
 '''
-from moviepy.editor import VideoFileClip, clips_array
+from moviepy.editor import *
 import os
 
 def crop_video(raw_clip: str, game_clip: str):
@@ -18,9 +18,14 @@ def crop_video(raw_clip: str, game_clip: str):
     assert w == 1080 and h == 1920
     game = game.crop(y1=h//4, y2=h//2+h//4)
 
-    game.without_audio()
     video = clips_array([[raw], [game]])
-
+    video = add_audio(video, game.audio)
+    
     path = os.path.join(os.getcwd(), "videos/" + os.urandom(8).hex() + ".mp4")
     video.write_videofile(path)
-    return path   
+    return path
+
+def add_audio(video: CompositeVideoClip, game: AudioFileClip) -> CompositeVideoClip:
+    audio = CompositeAudioClip([video.audio, game])
+    video = video.set_audio(audio)
+    return video
