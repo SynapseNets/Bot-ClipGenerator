@@ -2,10 +2,11 @@
 This file contains all the functions used to crop the input podcast and the selected video.
 '''
 from moviepy.editor import *
-import os, discord
+import os, discord, assemblyai, dotenv
 
 async def edit_and_send(raw_clip:str, game_clip: str, user: discord.User):
     result_path = crop_video(raw_clip, game_clip)
+    add_subtitles(raw_clip)
     channel = await user.create_dm()
     await channel.send(content="Here is the video you requested!", file=discord.File(result_path))
     os.remove(result_path)
@@ -36,3 +37,19 @@ def add_audio(video: CompositeVideoClip, game: AudioFileClip) -> CompositeVideoC
     audio = CompositeAudioClip([video.audio, game])
     video = video.set_audio(audio)
     return video
+
+def add_subtitles(raw_clip: str):
+    get_subtitles(raw_clip)
+    pass
+    
+def get_subtitles(raw_clip: str) -> str:
+    '''Returns the path of the file containing the transcript of the given audio file.'''
+    assemblyai.settings.api_key = os.getenv('assemblyai_key')
+    transcript = assemblyai.Transcriber().transcribe(raw_clip) #TODO: send only audio to save time and resources
+    subtitles = transcript.export_subtitles_srt(chars_per_caption=30)
+    
+    file_out = open(f"{raw_clip.split('.')[0]}.srt", "w")
+    file_out.write(subtitles)
+    file_out.close()
+    
+    return file_out.name
