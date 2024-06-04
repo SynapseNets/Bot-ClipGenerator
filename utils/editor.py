@@ -2,14 +2,16 @@
 This file contains all the functions used to crop the input podcast and the selected video.
 '''
 from moviepy.editor import *
-import os, discord, assemblyai, dotenv
+import os, discord, assemblyai, dotenv, pysrt
 
 async def edit_and_send(raw_clip:str, game_clip: str, user: discord.User):
     result_path = crop_video(raw_clip, game_clip)
-    add_subtitles(raw_clip)
+    final_video = add_subtitles(result_path)
+    #TODO: add music
     channel = await user.create_dm()
-    await channel.send(content="Here is the video you requested!", file=discord.File(result_path))
+    await channel.send(content="Here is the video you requested!", file=discord.File(final_video))
     os.remove(result_path)
+    os.remove(final_video)
     os.remove(raw_clip)
 
 def crop_video(raw_clip: str, game_clip: str):
@@ -39,8 +41,40 @@ def add_audio(video: CompositeVideoClip, game: AudioFileClip) -> CompositeVideoC
     return video
 
 def add_subtitles(raw_clip: str):
-    get_subtitles(raw_clip)
-    pass
+    video = VideoFileClip(raw_clip)
+    subtitles_file = get_subtitles(raw_clip)
+    subtitles = pysrt.open(subtitles_file)
+    
+    subtitle_clips = create_subtitle_clips(subtitles, video.size)
+    final_video = CompositeVideoClip([video] + subtitle_clips)
+    
+    final_path = raw_clip.split('.')[0] + "_subtitled.mp4"
+    final_video.write_videofile(final_path)
+    return final_path
+
+def time_to_seconds(time_obj):
+    return time_obj.hours * 3600 + time_obj.minutes * 60 + time_obj.seconds + time_obj.milliseconds / 1000
+
+def create_subtitle_clips(subtitles, videosize, fontsize=24, font='Arial', color='yellow'):
+    subtitle_clips = []
+
+    for subtitle in subtitles:
+        start_time = time_to_seconds(subtitle.start)
+        end_time = time_to_seconds(subtitle.end)
+        duration = end_time - start_time
+
+        video_width, video_height = videosize
+        
+        text_clip = TextClip(subtitle.text, fontsize=fontsize, font=font, color=color, bg_color = 'black',size=(video_width*3/4, None), method='caption').set_start(start_time).set_duration(duration)
+        subtitle_x_position = 'center'
+        subtitle_y_position = video_height* 4 / 5 
+
+        text_position = (subtitle_x_position, subtitle_y_position)                    
+        subtitle_clips.append(text_clip.set_position(text_position))
+
+    return subtitle_clips
+
+
     
 def get_subtitles(raw_clip: str) -> str:
     '''Returns the path of the file containing the transcript of the given audio file.'''
