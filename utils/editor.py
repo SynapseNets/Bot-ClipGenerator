@@ -15,7 +15,7 @@ async def edit_and_send(raw_clip:str, game_clip: str, user: discord.User):
     os.remove(raw_clip)
 
 def crop_video(raw_clip: str, game_clip: str):
-    raw = VideoFileClip(raw_clip).subclip(0, 5) # TODO CHANGE
+    raw = VideoFileClip(raw_clip)
     game = VideoFileClip(game_clip).subclip(0, raw.duration)
     
     raw = raw.resize(newsize=(1080, 1920))
@@ -50,12 +50,14 @@ def add_subtitles(raw_clip: str):
     
     final_path = raw_clip.split('.')[0] + "_subtitled.mp4"
     final_video.write_videofile(final_path)
+    os.remove(subtitles_file)
+    
     return final_path
 
 def time_to_seconds(time_obj):
     return time_obj.hours * 3600 + time_obj.minutes * 60 + time_obj.seconds + time_obj.milliseconds / 1000
 
-def create_subtitle_clips(subtitles, videosize, fontsize=24, font='Arial', color='yellow'):
+def create_subtitle_clips(subtitles, videosize, fontsize=95, font='Impact', color='White'):
     subtitle_clips = []
 
     for subtitle in subtitles:
@@ -65,9 +67,9 @@ def create_subtitle_clips(subtitles, videosize, fontsize=24, font='Arial', color
 
         video_width, video_height = videosize
         
-        text_clip = TextClip(subtitle.text, fontsize=fontsize, font=font, color=color, bg_color = 'black',size=(video_width*3/4, None), method='caption').set_start(start_time).set_duration(duration)
+        text_clip = TextClip(subtitle.text.upper(), fontsize=fontsize, font=font, color=color, stroke_width=4, stroke_color='Black', bg_color = 'transparent',size=(video_width*3/4, None), method='caption').set_start(start_time).set_duration(duration)
         subtitle_x_position = 'center'
-        subtitle_y_position = video_height* 4 / 5 
+        subtitle_y_position = video_height* 1 / 2
 
         text_position = (subtitle_x_position, subtitle_y_position)                    
         subtitle_clips.append(text_clip.set_position(text_position))
