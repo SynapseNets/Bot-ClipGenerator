@@ -64,6 +64,7 @@ def create_subtitle_clips(subtitles, videosize, fontsize=95, font='Impact', colo
         start_time = time_to_seconds(subtitle.start)
         end_time = time_to_seconds(subtitle.end)
         duration = end_time - start_time
+        zoom_duration = 0.1
 
         video_width, video_height = videosize
         
@@ -74,10 +75,11 @@ def create_subtitle_clips(subtitles, videosize, fontsize=95, font='Impact', colo
         # 3. Define the Scaling Function for Text Resizing
         def resize(t):
             # Define starting and ending scale factors
-            start_scale = 1
-            end_scale = 2
+            start_scale = 0.8
+            end_scale = 1
             # Compute the scaling factor linearly over the clip's duration
-            scale_factor = start_scale + t/duration * (end_scale - start_scale)
+            if t > zoom_duration: t = zoom_duration
+            scale_factor = start_scale + t/zoom_duration * (end_scale - start_scale)
             return scale_factor
 
         # 4. Define the Positioning Function to Center the Text
@@ -101,7 +103,7 @@ def get_subtitles(raw_clip: str) -> str:
     '''Returns the path of the file containing the transcript of the given audio file.'''
     assemblyai.settings.api_key = os.getenv('assemblyai_key')
     transcript = assemblyai.Transcriber().transcribe(raw_clip) #TODO: send only audio to save time and resources
-    subtitles = transcript.export_subtitles_srt(chars_per_caption=30)
+    subtitles = transcript.export_subtitles_srt(chars_per_caption=15)
     
     file_out = open(f"{raw_clip.split('.')[0]}.srt", "w")
     file_out.write(subtitles)
