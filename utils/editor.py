@@ -70,14 +70,33 @@ def create_subtitle_clips(subtitles, videosize, fontsize=95, font='Impact', colo
         text_clip = TextClip(subtitle.text.upper(), fontsize=fontsize, font=font, color=color, stroke_width=4, stroke_color='Black', bg_color = 'transparent',size=(video_width*3/4, None), method='caption').set_start(start_time).set_duration(duration)
         subtitle_x_position = 'center'
         subtitle_y_position = video_height* 1 / 2
+        
+        # 3. Define the Scaling Function for Text Resizing
+        def resize(t):
+            # Define starting and ending scale factors
+            start_scale = 1
+            end_scale = 2
+            # Compute the scaling factor linearly over the clip's duration
+            scale_factor = start_scale + t/duration * (end_scale - start_scale)
+            return scale_factor
 
+        # 4. Define the Positioning Function to Center the Text
+        def translate(t):
+            # Calculate the current scale at time t
+            current_scale = resize(t)
+            # Get the original dimensions of the text
+            text_width, text_height = text_clip.size
+            # Calculate the position to keep the text centered after scaling
+            x = (video_width - text_width * current_scale) / 2
+            y = (video_height - text_height * current_scale) / 2
+            return (x, y)
+        
+        text_clip = text_clip.resize(lambda t: resize(t)).set_position(translate)
         text_position = (subtitle_x_position, subtitle_y_position)                    
         subtitle_clips.append(text_clip.set_position(text_position))
 
     return subtitle_clips
 
-
-    
 def get_subtitles(raw_clip: str) -> str:
     '''Returns the path of the file containing the transcript of the given audio file.'''
     assemblyai.settings.api_key = os.getenv('assemblyai_key')
@@ -89,3 +108,4 @@ def get_subtitles(raw_clip: str) -> str:
     file_out.close()
     
     return file_out.name
+
