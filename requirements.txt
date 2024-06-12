@@ -4,3 +4,4 @@ moviepy>=1.0.3
 assemblyai>=0.26.0
 pysrt>=1.1.2
 imageio>=2.34.1
+nest-asyncio>=1.6.0

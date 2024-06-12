@@ -1,30 +1,43 @@
-import discord, requests, os
+import discord, os, asyncio, nest_asyncio
 import utils.gallery as gallery
 import utils.editor as editor
-from discord.ext import commands, tasks
-from discord import app_commands, ui
+from discord.ext import commands
+from discord import ui
 from dotenv import load_dotenv
+from threading import Thread
+
+class AsyncLoopThread(Thread):
+    def __init__(self):
+        super().__init__(daemon=True)
+        self.loop = asyncio.new_event_loop()
+
+    def run(self):
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_forever()
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='/', intents=intents)
-queue_videos = dict()
+loop_handler = AsyncLoopThread()
+nest_asyncio.apply(loop=loop_handler.loop)
+loop_handler.start()
 
 @bot.event
 async def on_ready():
     await bot.change_presence(status=discord.Status.online, activity=discord.CustomActivity("Watching TikTok"))
     synced = await bot.tree.sync()
-            
+    
     print(f"{len(synced)} commands loaded.")
     print(f'We have logged in as {bot.user}')
 
 class Modal_TextSettings(ui.Modal, title='Text Settings'):
-    settings = ui.TextInput(label='Answer', style=discord.TextStyle.paragraph)
+    fontSize = ui.TextInput(label='Font Size', style=discord.TextStyle.short, required=True)
 
     def __init__(self, raw_clip: discord.Attachment, gamevideo: str, music: str, font: str):
         self.raw_clip = raw_clip
         self.video = gamevideo
         self.music = music
         self.font = font
+        # self.font_size = font_size
         super().__init__()
         
     async def on_submit(self, interaction: discord.Interaction):
@@ -33,7 +46,10 @@ class Modal_TextSettings(ui.Modal, title='Text Settings'):
         raw_file = await gallery.save_raw_file(self.raw_clip, interaction.user.id)
 
         await interaction.followup.send(f'Settings received, the result video will be sent to you shortly.', ephemeral=True)
-        await editor.edit_and_send(raw_file, os.path.join(os.getcwd(), f'clips/{self.video}'), interaction.user)
+        asyncio.run_coroutine_threadsafe(
+            editor.edit_and_send(raw_file, os.path.join(os.getcwd(), f'clips/{self.video}'), interaction.user), 
+            loop_handler.loop
+        )
         
 @bot.tree.command(name='ping', description='Replies with pong!')
 async def ping(interaction: discord.Interaction):
@@ -64,16 +80,15 @@ async def autocomplete_callback(interaction: discord.Interaction, current: str):
 async def autocomplete_callback(interaction: discord.Interaction, current: str):
     return gallery.get_Choices(type=gallery.Directories.Fonts, criteria=current)
 
+def main():
+    # seems we dont use docker
+    if not os.path.exists("temp"): 
+        os.mkdir("temp")
+    if not os.path.exists("videos"):
+        os.mkdir("videos")
+
+    load_dotenv()    
+    bot.run(os.getenv('token'))
 
 if __name__ == "__main__":
-    # seems we dont use docker
-    try:
-        os.mkdir("temp")
-    except:
-        pass
-    try:
-        os.mkdir("videos")
-    except:
-        pass
-    load_dotenv()
-    bot.run(os.getenv('token'))
+    main()
