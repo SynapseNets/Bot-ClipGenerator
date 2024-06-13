@@ -2,6 +2,9 @@
 temp/
 videos/
 .vscode/
+music/[a-zA-Z]*
+fonts/[a-zA-Z]*
+clips/[a-zA-Z]*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -39,6 +39,8 @@ def retrieve_Files(type: Directories) -> list[str]:
 def get_Choices(type: Directories, criteria: str) -> list[app_commands.Choice]:
     results = []
     for file in retrieve_Files(type=type):
+        if file == '.gitkeep':
+            continue
         if criteria in file:
             results.append(app_commands.Choice(name=file, value=file))
     return results

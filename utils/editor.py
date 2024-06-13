@@ -3,17 +3,38 @@ This file contains all the functions used to crop the input podcast and the sele
 '''
 from moviepy.editor import *
 from assemblyai.types import TranscriptError
-import os, discord, assemblyai, pysrt
+import os, discord, assemblyai, pysrt, requests
 
-async def edit_and_send(raw_clip:str, game_clip: str, user: discord.User):
+async def edit_and_send(raw_clip:str, game_clip: str, channel: discord.DMChannel, token: str):
     result_path = crop_video(raw_clip, game_clip)
     final_video = add_subtitles(result_path)
-    #TODO: add music
-    channel = await user.create_dm()
-    await channel.send(content="Here is the video you requested!", file=discord.File(final_video))
+        
+    send_message(channel, "Here is the video you requested!", discord.File(final_video), token)
+    
     os.remove(result_path)
     os.remove(final_video)
     os.remove(raw_clip)
+    return
+
+# bypass discord.py's limitations
+def send_message(channel: discord.DMChannel, message: str, file: discord.File | None, token: str):
+    headers = {
+        'Authorization' : f'Bot {token}',
+    }
+    content = {
+        'content' : message
+    }
+    
+    file = {
+        'file' : (file.filename, file.fp, 'multipart/form-data')
+    }
+    
+    requests.post(
+        f'https://discord.com/api/v10/channels/{channel.id}/messages',
+        headers=headers,
+        data=content,
+        files=file
+    )
 
 def crop_video(raw_clip: str, game_clip: str):
     raw = VideoFileClip(raw_clip)

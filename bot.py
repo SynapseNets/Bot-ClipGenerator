@@ -46,8 +46,15 @@ class Modal_TextSettings(ui.Modal, title='Text Settings'):
         raw_file = await gallery.save_raw_file(self.raw_clip, interaction.user.id)
 
         await interaction.followup.send(f'Settings received, the result video will be sent to you shortly.', ephemeral=True)
+        channel = await interaction.user.create_dm()
         asyncio.run_coroutine_threadsafe(
-            editor.edit_and_send(raw_file, os.path.join(os.getcwd(), f'clips/{self.video}'), interaction.user), 
+            editor.edit_and_send(
+                raw_clip=raw_file, 
+                game_clip=os.path.join(os.getcwd(), f'clips/{self.video}'), 
+                # audio_path=os.path.join(os.getcwd(), f'music/{self.music}'),
+                channel=channel, 
+                token=os.getenv('token')
+            ), 
             loop_handler.loop
         )
         
