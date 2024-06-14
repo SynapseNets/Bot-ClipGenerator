@@ -7,13 +7,11 @@ import os, discord, assemblyai, requests
 
 async def edit_and_send(raw_clip:str, game_clip: str, music: str | None, font: tuple, channel: discord.DMChannel, token: str):
     cropped_path = crop_video(raw_clip, game_clip)
-    result_path = add_background_music(cropped_path, music)
     audio = get_mp3_only(raw_clip)
-    final_video = add_subtitles(result_path, font[0], font[1], font[2], audio=audio)
+    final_video = add_subtitles_and_music(cropped_path, font[0], font[1], font[2], music, audio=audio)
     
     send_message(channel, "Here is the video you requested!", discord.File(final_video), token)
     
-    os.remove(result_path)
     os.remove(cropped_path)
     os.remove(final_video)
     os.remove(raw_clip)
@@ -65,30 +63,18 @@ def crop_video(raw_clip: str, game_clip: str):
     video.write_videofile(path)
     return path
 
-def add_background_music(raw_clip: str, music: str | None):
-    if not music:
-        return raw_clip
-    
-    video = VideoFileClip(raw_clip)
-    
-    audio = AudioFileClip(music)
-    audio = audio.fx(afx.volumex, 0.3)
-    audio = audio.set_duration(video.duration)
-    new_audio = CompositeAudioClip([video.audio, audio])
-    
-    final_video = video.set_audio(new_audio)
-    final_path = raw_clip.split('.')[0] + "_with_music.mp4"
-    
-    final_video.write_videofile(final_path)
-
-    return final_path
-
-def add_subtitles(raw_clip: str, font: str, font_color: str, font_size: int, audio: str):
+def add_subtitles_and_music(raw_clip: str, font: str, font_color: str, font_size: int, music: str, audio: str):
     video = VideoFileClip(raw_clip)
     subtitles = get_subtitles(audio)
     
     subtitle_clips = create_subtitle_clips(subtitles, video.size, font=font, color=font_color, fontsize=font_size)
     final_video = CompositeVideoClip([video] + subtitle_clips)
+    
+    if music:
+        print(music)
+        music_audio = AudioFileClip(music).set_duration(final_video.duration)
+        new_audio = CompositeAudioClip([final_video.audio, music_audio])
+        final_video = final_video.set_audio(new_audio)
     
     final_path = raw_clip.split('.')[0] + "_subtitled.mp4"
     final_video.write_videofile(final_path)    
