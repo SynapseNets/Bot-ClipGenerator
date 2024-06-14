@@ -5,6 +5,7 @@ from discord.ext import commands
 from discord import ui
 from dotenv import load_dotenv
 from threading import Thread
+import utils.checkbot as checkbot
 
 class AsyncLoopThread(Thread):
     def __init__(self):
