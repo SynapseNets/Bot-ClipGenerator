@@ -5,17 +5,16 @@ from moviepy.editor import *
 from assemblyai.types import Word
 import os, discord, assemblyai, requests
 
-async def edit_and_send(raw_clip:str, game_clip: str, music: str | None, font: tuple, channel: discord.DMChannel, token: str):
+async def edit_and_send(raw_clip:str, game_clip: str, music: str | None, volume: float, font: tuple, channel: discord.DMChannel, token: str):
     cropped_path = crop_video(raw_clip, game_clip)
     audio = get_mp3_only(raw_clip)
-    final_video = add_subtitles_and_music(cropped_path, font[0], font[1], font[2], music, audio=audio)
+    final_video = add_subtitles_and_music(cropped_path, font[0], font[1], font[2], music, audio=audio, volume=volume)
     path = os.path.join(os.getcwd(), f'videos/{os.urandom(8).hex()}.mp4')
     final_video.write_videofile(path)
-    send_message(channel, "Here is the video you requested!", discord.File(path), token)
     
-    os.remove(cropped_path)
-    os.remove(final_video)
-    os.remove(raw_clip)
+    send_message(channel, "Here is the video you requested!", discord.File(path), token)
+
+    os.remove(path)
     return
 
 def get_mp3_only(clip: str):
@@ -60,7 +59,7 @@ def crop_video(raw_clip: str, game_clip: str):
     
     return video
 
-def add_subtitles_and_music(video: CompositeVideoClip, font: str, font_color: str, font_size: int, music: str, audio: AudioFileClip):
+def add_subtitles_and_music(video: CompositeVideoClip, font: str, font_color: str, font_size: int, music: str, audio: AudioFileClip, volume: float):
     audio.write_audiofile('temp/audio.mp3')
     subtitles = get_subtitles("temp/audio.mp3")
     os.remove('temp/audio.mp3')
@@ -71,6 +70,7 @@ def add_subtitles_and_music(video: CompositeVideoClip, font: str, font_color: st
     if music:
         print(music)
         music_audio = AudioFileClip(music).set_duration(final_video.duration)
+        music_audio = music_audio.fx(afx.volumex, volume)
         new_audio = CompositeAudioClip([final_video.audio, music_audio])
         final_video = final_video.set_audio(new_audio)
     

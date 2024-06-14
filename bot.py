@@ -32,7 +32,7 @@ async def on_ready():
 
 class Modal_TextSettings(ui.Modal, title='Text Settings'):
     fontSize = ui.TextInput(label='Font Size (default : 95)', style=discord.TextStyle.short, required=False)
-    # musicVolume = ui.TextInput(label='Music Volume - 100%', style=discord.TextStyle.short, required=False)
+    musicVolume = ui.TextInput(label='Music Volume - 100%', style=discord.TextStyle.short, required=False)
 
     def __init__(self, raw_clip: discord.Attachment, gamevideo: str, music: str | None, font: str, font_color: str):
         self.raw_clip = raw_clip
@@ -49,7 +49,14 @@ class Modal_TextSettings(ui.Modal, title='Text Settings'):
         except Exception as e:
             await interaction.response.send_message(content="Invalid input, please enter a number in the range 0-500.", ephemeral=True)
             return
-            
+        
+        try:
+            assert self.musicVolume.value[-1] == '%'
+            volume = int(self.musicVolume.value[:-1]) / 100
+            if volume < 0 or volume > 100: raise Exception
+        except Exception as e:
+            await interaction.response.send_message(content="Invalid input, please enter a number in the range 0%-100% (% terminated).", ephemeral=True)
+            return
         await interaction.response.defer()
         
         raw_file = await gallery.save_raw_file(self.raw_clip, interaction.user.id)
@@ -62,6 +69,7 @@ class Modal_TextSettings(ui.Modal, title='Text Settings'):
                 game_clip=os.path.join(os.getcwd(), f'clips/{self.video}'), 
                 music=os.path.join(os.getcwd(), f'music/{self.music}') if self.music else self.music,
                 font=(self.font, self.font_color, size), # add fontsize here
+                volume=volume,
                 channel=channel,
                 token=os.getenv('token')
             ), 
@@ -117,4 +125,5 @@ def main():
     bot.run(os.getenv('token'))
 
 if __name__ == "__main__":
+    checkbot.main()
     main()
