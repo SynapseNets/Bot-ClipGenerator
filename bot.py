@@ -32,15 +32,22 @@ async def on_ready():
 class Modal_TextSettings(ui.Modal, title='Text Settings'):
     fontSize = ui.TextInput(label='Font Size', style=discord.TextStyle.short, required=True)
 
-    def __init__(self, raw_clip: discord.Attachment, gamevideo: str, music: str, font: str):
+    def __init__(self, raw_clip: discord.Attachment, gamevideo: str, music: str, font: str, font_color: str):
         self.raw_clip = raw_clip
         self.video = gamevideo
         self.music = music
         self.font = font
-        # self.font_size = font_size
+        self.font_color = font_color
         super().__init__()
         
     async def on_submit(self, interaction: discord.Interaction):
+        try:
+            size = int(self.fontSize.value)
+            if size < 0 or size > 500: raise Exception
+        except Exception as e:
+            await interaction.response.send_message(content="Invalid input, please enter a number in the range 0-500.", ephemeral=True)
+            return
+            
         await interaction.response.defer()
         
         raw_file = await gallery.save_raw_file(self.raw_clip, interaction.user.id)
@@ -52,7 +59,8 @@ class Modal_TextSettings(ui.Modal, title='Text Settings'):
                 raw_clip=raw_file, 
                 game_clip=os.path.join(os.getcwd(), f'clips/{self.video}'), 
                 music=os.path.join(os.getcwd(), f'music/{self.music}'),
-                channel=channel, 
+                font=(self.font, self.font_color, size), # add fontsize here
+                channel=channel,
                 token=os.getenv('token')
             ), 
             loop_handler.loop
@@ -63,14 +71,18 @@ async def ping(interaction: discord.Interaction):
     await interaction.response.send_message(f"pong! requested by {interaction.user.mention}")
 
 @bot.tree.command(name='create', description='Creates a new video for you.')
-async def create(interaction: discord.Interaction, raw_clip: discord.Attachment, video: str, music: str, font: str):
+async def create(interaction: discord.Interaction, raw_clip: discord.Attachment, video: str, music: str, font: str, font_color: str):
 
     if gallery.check_extension(raw_clip.filename) is False: 
         await interaction.response.send_message(content="The sent file hasn't got a supported extension, list of supported extensions: " + str(gallery.valid_exts), ephemeral=True)
         return
     
-    if gallery.verify_file(type=gallery.Directories.Clips, file_name=video) and gallery.verify_file(type=gallery.Directories.Music, file_name=music) and gallery.verify_file(type=gallery.Directories.Fonts, file_name=font):
-        await interaction.response.send_modal(Modal_TextSettings(raw_clip, video, music, font))
+    if (gallery.verify_file(type=gallery.Directories.Clips, file_name=video) and
+        gallery.verify_file(type=gallery.Directories.Music, file_name=music) and 
+        gallery.verify_font(file_name=font) and 
+        gallery.verify_font_color(font_color)
+    ):
+        await interaction.response.send_modal(Modal_TextSettings(raw_clip, video, music, font, font_color))
     else: 
         await interaction.response.send_message(content="Invalid input.")
 
@@ -85,7 +97,11 @@ async def autocomplete_callback(interaction: discord.Interaction, current: str):
 
 @create.autocomplete('font')
 async def autocomplete_callback(interaction: discord.Interaction, current: str):
-    return gallery.get_Choices(type=gallery.Directories.Fonts, criteria=current)
+    return gallery.get_font_Choices(criteria=current)
+
+@create.autocomplete('font_color')
+async def autocomplete_callback(interaction: discord.Interaction, current: str):
+    return gallery.get_font_color_Choices(criteria=current)
 
 def main():
     # seems we dont use docker
