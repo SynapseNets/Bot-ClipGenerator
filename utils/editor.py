@@ -8,7 +8,8 @@ import os, discord, assemblyai, pysrt, requests
 async def edit_and_send(raw_clip:str, game_clip: str, music: str, font: tuple, channel: discord.DMChannel, token: str):
     cropped_path = crop_video(raw_clip, game_clip)
     result_path = add_background_music(cropped_path, music)
-    final_video = add_subtitles(result_path, font[0], font[1], font[2])
+    audio = get_mp3_only(raw_clip)
+    final_video = add_subtitles(result_path, font[0], font[1], font[2], audio=audio)
         
     send_message(channel, "Here is the video you requested!", discord.File(final_video), token)
     
@@ -17,6 +18,11 @@ async def edit_and_send(raw_clip:str, game_clip: str, music: str, font: tuple, c
     os.remove(final_video)
     os.remove(raw_clip)
     return
+
+def get_mp3_only(clip: str):
+    audio = AudioFileClip(clip)
+    audio.write_audiofile(clip.split('.')[0] + ".mp3")
+    return clip.split('.')[0] + ".mp3"
 
 # bypass discord.py's limitations
 def send_message(channel: discord.DMChannel, message: str, file: discord.File | None, token: str):
@@ -40,7 +46,8 @@ def send_message(channel: discord.DMChannel, message: str, file: discord.File | 
 
 def crop_video(raw_clip: str, game_clip: str):
     raw = VideoFileClip(raw_clip)
-    game = VideoFileClip(game_clip).subclip(0, raw.duration)
+    game = VideoFileClip(game_clip, audio=False)
+    game = game.subclip(0, raw.duration)
     
     raw = raw.resize(newsize=(1080, 1920))
     (w, h) = raw.size
@@ -53,22 +60,17 @@ def crop_video(raw_clip: str, game_clip: str):
     game = game.crop(y1=h//4, y2=h//2+h//4)
 
     video = clips_array([[raw], [game]])
-    video = add_audio(video, game.audio)
     
     path = os.path.join(os.getcwd(), "videos/" + os.urandom(8).hex() + ".mp4")
     video.write_videofile(path)
     return path
-
-def add_audio(video: CompositeVideoClip, game: AudioFileClip) -> CompositeVideoClip:
-    audio = CompositeAudioClip([video.audio, game])
-    video = video.set_audio(audio)
-    return video
 
 def add_background_music(raw_clip: str, music: str):
     print(raw_clip)
     video = VideoFileClip(raw_clip)
     
     audio = AudioFileClip(music)
+    audio = audio.fx(afx.volumex, 0.3)
     audio = audio.set_duration(video.duration)
     new_audio = CompositeAudioClip([video.audio, audio])
     
@@ -79,9 +81,9 @@ def add_background_music(raw_clip: str, music: str):
 
     return final_path
 
-def add_subtitles(raw_clip: str, font: str, font_color: str, font_size: int):
+def add_subtitles(raw_clip: str, font: str, font_color: str, font_size: int, audio: str):
     video = VideoFileClip(raw_clip)
-    subtitles_file = get_subtitles(raw_clip)
+    subtitles_file = get_subtitles(audio)
     subtitles = pysrt.open(subtitles_file)
     
     subtitle_clips = create_subtitle_clips(subtitles, video.size, font=font, color=font_color, fontsize=font_size)
