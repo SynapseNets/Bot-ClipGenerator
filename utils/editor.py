@@ -5,7 +5,8 @@ from moviepy.editor import *
 from assemblyai.types import TranscriptError
 import os, discord, assemblyai, pysrt, requests
 
-async def edit_and_send(raw_clip:str, game_clip: str, music: str, font: tuple, channel: discord.DMChannel, token: str):
+async def edit_and_send(raw_clip:str, game_clip: str, music: str | None, font: tuple, channel: discord.DMChannel, token: str):
+    
     cropped_path = crop_video(raw_clip, game_clip)
     result_path = add_background_music(cropped_path, music)
     audio = get_mp3_only(raw_clip)
@@ -65,8 +66,10 @@ def crop_video(raw_clip: str, game_clip: str):
     video.write_videofile(path)
     return path
 
-def add_background_music(raw_clip: str, music: str):
-    print(raw_clip)
+def add_background_music(raw_clip: str, music: str | None = None):
+    if music is None:
+        return raw_clip
+    
     video = VideoFileClip(raw_clip)
     
     audio = AudioFileClip(music)

@@ -2,7 +2,7 @@ import discord, os, asyncio, nest_asyncio
 import utils.gallery as gallery
 import utils.editor as editor
 from discord.ext import commands
-from discord import ui
+from discord import ui, app_commands
 from dotenv import load_dotenv
 from threading import Thread
 
@@ -82,6 +82,7 @@ async def create(interaction: discord.Interaction, raw_clip: discord.Attachment,
         gallery.verify_font(file_name=font) and 
         gallery.verify_font_color(font_color)
     ):
+        if music == 'None': music = None
         await interaction.response.send_modal(Modal_TextSettings(raw_clip, video, music, font, font_color))
     else: 
         await interaction.response.send_message(content="Invalid input.")
