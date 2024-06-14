@@ -51,7 +51,7 @@ class Modal_TextSettings(ui.Modal, title='Text Settings'):
             editor.edit_and_send(
                 raw_clip=raw_file, 
                 game_clip=os.path.join(os.getcwd(), f'clips/{self.video}'), 
-                # audio_path=os.path.join(os.getcwd(), f'music/{self.music}'),
+                music=os.path.join(os.getcwd(), f'music/{self.music}'),
                 channel=channel, 
                 token=os.getenv('token')
             ), 

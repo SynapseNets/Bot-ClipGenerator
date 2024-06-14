@@ -5,13 +5,15 @@ from moviepy.editor import *
 from assemblyai.types import TranscriptError
 import os, discord, assemblyai, pysrt, requests
 
-async def edit_and_send(raw_clip:str, game_clip: str, channel: discord.DMChannel, token: str):
-    result_path = crop_video(raw_clip, game_clip)
+async def edit_and_send(raw_clip:str, game_clip: str, music: str, channel: discord.DMChannel, token: str):
+    cropped_path = crop_video(raw_clip, game_clip)
+    result_path = add_background_music(cropped_path, music)
     final_video = add_subtitles(result_path)
         
     send_message(channel, "Here is the video you requested!", discord.File(final_video), token)
     
     os.remove(result_path)
+    os.remove(cropped_path)
     os.remove(final_video)
     os.remove(raw_clip)
     return
@@ -61,6 +63,21 @@ def add_audio(video: CompositeVideoClip, game: AudioFileClip) -> CompositeVideoC
     audio = CompositeAudioClip([video.audio, game])
     video = video.set_audio(audio)
     return video
+
+def add_background_music(raw_clip: str, music: str):
+    print(raw_clip)
+    video = VideoFileClip(raw_clip)
+    
+    audio = AudioFileClip(music)
+    audio = audio.set_duration(video.duration)
+    new_audio = CompositeAudioClip([video.audio, audio])
+    
+    final_video = video.set_audio(new_audio)
+    final_path = raw_clip.split('.')[0] + "_with_music.mp4"
+    
+    final_video.write_videofile(final_path)
+
+    return final_path
 
 def add_subtitles(raw_clip: str):
     video = VideoFileClip(raw_clip)
