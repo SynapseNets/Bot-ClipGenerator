@@ -9,8 +9,9 @@ async def edit_and_send(raw_clip:str, game_clip: str, music: str | None, font: t
     cropped_path = crop_video(raw_clip, game_clip)
     audio = get_mp3_only(raw_clip)
     final_video = add_subtitles_and_music(cropped_path, font[0], font[1], font[2], music, audio=audio)
-    final_video.write_videofile(f'videos/{os.urandom(8).hex()}.mp4')
-    send_message(channel, "Here is the video you requested!", discord.File(os.path.join(os.path.curdir(), f'videos/{os.urandom(8).hex()}.mp4')), token)
+    path = os.path.join(os.getcwd(), f'videos/{os.urandom(8).hex()}.mp4')
+    final_video.write_videofile(path)
+    send_message(channel, "Here is the video you requested!", discord.File(path), token)
     
     os.remove(cropped_path)
     os.remove(final_video)

