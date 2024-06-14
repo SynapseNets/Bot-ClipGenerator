@@ -4,6 +4,7 @@ videos/
 .vscode/
 music/[a-zA-Z]*
 clips/[a-zA-Z]*
+!music/None
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

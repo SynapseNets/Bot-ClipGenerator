@@ -2,16 +2,15 @@
 This file contains all the functions used to crop the input podcast and the selected video.
 '''
 from moviepy.editor import *
-from assemblyai.types import TranscriptError
-import os, discord, assemblyai, pysrt, requests
+from assemblyai.types import Word
+import os, discord, assemblyai, requests
 
 async def edit_and_send(raw_clip:str, game_clip: str, music: str | None, font: tuple, channel: discord.DMChannel, token: str):
-    
     cropped_path = crop_video(raw_clip, game_clip)
     result_path = add_background_music(cropped_path, music)
     audio = get_mp3_only(raw_clip)
     final_video = add_subtitles(result_path, font[0], font[1], font[2], audio=audio)
-        
+    
     send_message(channel, "Here is the video you requested!", discord.File(final_video), token)
     
     os.remove(result_path)
@@ -66,8 +65,8 @@ def crop_video(raw_clip: str, game_clip: str):
     video.write_videofile(path)
     return path
 
-def add_background_music(raw_clip: str, music: str | None = None):
-    if music is None:
+def add_background_music(raw_clip: str, music: str | None):
+    if not music:
         return raw_clip
     
     video = VideoFileClip(raw_clip)
@@ -86,29 +85,26 @@ def add_background_music(raw_clip: str, music: str | None = None):
 
 def add_subtitles(raw_clip: str, font: str, font_color: str, font_size: int, audio: str):
     video = VideoFileClip(raw_clip)
-    subtitles_file = get_subtitles(audio)
-    subtitles = pysrt.open(subtitles_file)
+    subtitles = get_subtitles(audio)
     
     subtitle_clips = create_subtitle_clips(subtitles, video.size, font=font, color=font_color, fontsize=font_size)
     final_video = CompositeVideoClip([video] + subtitle_clips)
     
     final_path = raw_clip.split('.')[0] + "_subtitled.mp4"
-    final_video.write_videofile(final_path)
-    os.remove(subtitles_file)
-    
+    final_video.write_videofile(final_path)    
     return final_path
 
-def time_to_seconds(time_obj):
-    return time_obj.hours * 3600 + time_obj.minutes * 60 + time_obj.seconds + time_obj.milliseconds / 1000
+def time_to_seconds(time):
+    return time / 1000
 
-def create_subtitle_clips(subtitles, videosize, fontsize=95, font='Impact', color='White'):
+def create_subtitle_clips(subtitles: list[Word], videosize, fontsize=95, font='Impact', color='White'):
     subtitle_clips = []
 
     for subtitle in subtitles:
         start_time = time_to_seconds(subtitle.start)
         end_time = time_to_seconds(subtitle.end)
         duration = end_time - start_time
-        zoom_duration = 0.1
+        zoom_duration = 0.05
 
         video_width, video_height = videosize
         
@@ -143,18 +139,8 @@ def create_subtitle_clips(subtitles, videosize, fontsize=95, font='Impact', colo
 
     return subtitle_clips
 
-def get_subtitles(raw_clip: str) -> str:
+def get_subtitles(raw_clip: str) -> list[Word]:
     '''Returns the path of the file containing the transcript of the given audio file.'''
     assemblyai.settings.api_key = os.getenv('assemblyai_key')
     transcript = assemblyai.Transcriber().transcribe(raw_clip) #TODO: send only audio to save time and resources
-    try:
-        subtitles = transcript.export_subtitles_srt(chars_per_caption=15)
-    except TranscriptError as e:
-        subtitles = ''
-        pass
-    
-    file_out = open(f"{raw_clip.split('.')[0]}.srt", "w")
-    file_out.write(subtitles)
-    file_out.close()
-    
-    return file_out.name
+    return transcript.words

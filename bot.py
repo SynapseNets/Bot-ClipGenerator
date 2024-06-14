@@ -2,7 +2,7 @@ import discord, os, asyncio, nest_asyncio
 import utils.gallery as gallery
 import utils.editor as editor
 from discord.ext import commands
-from discord import ui, app_commands
+from discord import ui
 from dotenv import load_dotenv
 from threading import Thread
 
@@ -30,9 +30,10 @@ async def on_ready():
     print(f'We have logged in as {bot.user}')
 
 class Modal_TextSettings(ui.Modal, title='Text Settings'):
-    fontSize = ui.TextInput(label='Font Size', style=discord.TextStyle.short, required=True)
+    fontSize = ui.TextInput(label='Font Size (default : 95)', style=discord.TextStyle.short, required=False)
+    # musicVolume = ui.TextInput(label='Music Volume - 100%', style=discord.TextStyle.short, required=False)
 
-    def __init__(self, raw_clip: discord.Attachment, gamevideo: str, music: str, font: str, font_color: str):
+    def __init__(self, raw_clip: discord.Attachment, gamevideo: str, music: str | None, font: str, font_color: str):
         self.raw_clip = raw_clip
         self.video = gamevideo
         self.music = music
@@ -58,7 +59,7 @@ class Modal_TextSettings(ui.Modal, title='Text Settings'):
             editor.edit_and_send(
                 raw_clip=raw_file, 
                 game_clip=os.path.join(os.getcwd(), f'clips/{self.video}'), 
-                music=os.path.join(os.getcwd(), f'music/{self.music}'),
+                music=os.path.join(os.getcwd(), f'music/{self.music}') if self.music else self.music,
                 font=(self.font, self.font_color, size), # add fontsize here
                 channel=channel,
                 token=os.getenv('token')
@@ -82,7 +83,7 @@ async def create(interaction: discord.Interaction, raw_clip: discord.Attachment,
         gallery.verify_font(file_name=font) and 
         gallery.verify_font_color(font_color)
     ):
-        if music == 'None': music = None
+        music = music if music != 'None' else None
         await interaction.response.send_modal(Modal_TextSettings(raw_clip, video, music, font, font_color))
     else: 
         await interaction.response.send_message(content="Invalid input.")
