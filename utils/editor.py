@@ -9,8 +9,8 @@ async def edit_and_send(raw_clip:str, game_clip: str, music: str | None, font: t
     cropped_path = crop_video(raw_clip, game_clip)
     audio = get_mp3_only(raw_clip)
     final_video = add_subtitles_and_music(cropped_path, font[0], font[1], font[2], music, audio=audio)
-    
-    send_message(channel, "Here is the video you requested!", discord.File(final_video), token)
+    final_video.write_videofile(f'videos/{os.urandom(8).hex()}.mp4')
+    send_message(channel, "Here is the video you requested!", discord.File(os.path.join(os.path.curdir(), f'videos/{os.urandom(8).hex()}.mp4')), token)
     
     os.remove(cropped_path)
     os.remove(final_video)
@@ -18,9 +18,7 @@ async def edit_and_send(raw_clip:str, game_clip: str, music: str | None, font: t
     return
 
 def get_mp3_only(clip: str):
-    audio = AudioFileClip(clip)
-    audio.write_audiofile(clip.split('.')[0] + ".mp3")
-    return clip.split('.')[0] + ".mp3"
+    return AudioFileClip(clip)
 
 # bypass discord.py's limitations
 def send_message(channel: discord.DMChannel, message: str, file: discord.File | None, token: str):
@@ -59,13 +57,12 @@ def crop_video(raw_clip: str, game_clip: str):
 
     video = clips_array([[raw], [game]])
     
-    path = os.path.join(os.getcwd(), "videos/" + os.urandom(8).hex() + ".mp4")
-    video.write_videofile(path)
-    return path
+    return video
 
-def add_subtitles_and_music(raw_clip: str, font: str, font_color: str, font_size: int, music: str, audio: str):
-    video = VideoFileClip(raw_clip)
-    subtitles = get_subtitles(audio)
+def add_subtitles_and_music(video: CompositeVideoClip, font: str, font_color: str, font_size: int, music: str, audio: AudioFileClip):
+    audio.write_audiofile('temp/audio.mp3')
+    subtitles = get_subtitles("temp/audio.mp3")
+    os.remove('temp/audio.mp3')
     
     subtitle_clips = create_subtitle_clips(subtitles, video.size, font=font, color=font_color, fontsize=font_size)
     final_video = CompositeVideoClip([video] + subtitle_clips)
@@ -76,9 +73,7 @@ def add_subtitles_and_music(raw_clip: str, font: str, font_color: str, font_size
         new_audio = CompositeAudioClip([final_video.audio, music_audio])
         final_video = final_video.set_audio(new_audio)
     
-    final_path = raw_clip.split('.')[0] + "_subtitled.mp4"
-    final_video.write_videofile(final_path)    
-    return final_path
+    return final_video
 
 def time_to_seconds(time):
     return time / 1000
@@ -128,5 +123,5 @@ def create_subtitle_clips(subtitles: list[Word], videosize, fontsize=95, font='I
 def get_subtitles(raw_clip: str) -> list[Word]:
     '''Returns the path of the file containing the transcript of the given audio file.'''
     assemblyai.settings.api_key = os.getenv('assemblyai_key')
-    transcript = assemblyai.Transcriber().transcribe(raw_clip) #TODO: send only audio to save time and resources
+    transcript = assemblyai.Transcriber().transcribe(raw_clip)
     return transcript.words
