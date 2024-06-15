@@ -3,7 +3,7 @@ This file contains all the functions used to crop the input podcast and the sele
 '''
 from moviepy.editor import *
 from assemblyai.types import Word
-import os, discord, assemblyai, requests
+import os, discord, assemblyai, requests, subprocess
 
 async def edit_and_send(raw_clip:str, game_clip: str, music: str | None, volume: float, font: tuple, channel: discord.DMChannel, token: str):
     cropped_path = crop_video(raw_clip, game_clip)
@@ -12,8 +12,12 @@ async def edit_and_send(raw_clip:str, game_clip: str, music: str | None, volume:
     path = os.path.join(os.getcwd(), f'videos/{os.urandom(8).hex()}.mp4')
     final_video.write_videofile(path)
     
-    send_message(channel, "Here is the video you requested!", discord.File(path), token)
+    final_path = os.path.join(os.getcwd(), f'videos/{os.urandom(8).hex()}.mp4')
+    subprocess.run(f'ffmpeg -i {path} -vcodec libx265 -crf 28 {final_path}', shell=True)
+    
+    send_message(channel, "Here is the video you requested!", discord.File(final_path), token)
 
+    os.remove(final_path)
     os.remove(path)
     return
 

@@ -87,6 +87,10 @@ async def create(interaction: discord.Interaction, raw_clip: discord.Attachment,
         await interaction.response.send_message(content="The sent file hasn't got a supported extension, list of supported extensions: " + str(gallery.valid_exts), ephemeral=True)
         return
     
+    if raw_clip.size > 25000000:
+        await interaction.response.send_message(content="The sent file is too large, the maximum file size is 25MB.", ephemeral=True)
+        return
+    
     if (gallery.verify_file(type=gallery.Directories.Clips, file_name=video) and
         gallery.verify_file(type=gallery.Directories.Music, file_name=music) and 
         gallery.verify_font(file_name=font) and 
