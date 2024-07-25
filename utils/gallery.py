@@ -1,8 +1,7 @@
 '''
-This file contains all the functions used to retrieve the files in the 3 folders:
+This file contains all the functions used to retrieve the files in the 2 folders:
 - Clips
 - Music
-- Fonts
 '''
 
 import os

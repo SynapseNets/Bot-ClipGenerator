@@ -1,0 +1,7 @@
+services:
+  bot:
+    image: bot
+    build: .
+    restart: on-failure
+    env_file:
+      - .env

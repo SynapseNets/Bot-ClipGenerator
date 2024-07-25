@@ -5,7 +5,6 @@ from discord.ext import commands
 from discord import ui
 from dotenv import load_dotenv
 from threading import Thread
-import utils.checkbot as checkbot
 
 class AsyncLoopThread(Thread):
     def __init__(self):
@@ -118,16 +117,5 @@ async def autocomplete_callback(interaction: discord.Interaction, current: str):
 async def autocomplete_callback(interaction: discord.Interaction, current: str):
     return gallery.get_font_color_Choices(criteria=current)
 
-def main():
-    # seems we dont use docker
-    if not os.path.exists("temp"): 
-        os.mkdir("temp")
-    if not os.path.exists("videos"):
-        os.mkdir("videos")
-
-    load_dotenv()    
-    bot.run(os.getenv('token'))
-
 if __name__ == "__main__":
-    checkbot.main()
-    main()
+    bot.run(os.getenv('token'))
