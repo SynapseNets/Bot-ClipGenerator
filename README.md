@@ -7,6 +7,7 @@ Our bot is designed to be run with the following `.env` file in the main directo
 token=xxx
 assemblyai_key=yyy
 ```
+You must also create a directory **clips** with all the **`mp4`** videos you want to use in your contents.
 
 ## Commands 💬
 * `/ping`: replies with **pong** if the bot is online.
