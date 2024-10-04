@@ -98,7 +98,7 @@ def create_subtitle_clips(subtitles: list[Word], videosize, fontsize=95, font='I
         subtitle_x_position = 'center'
         subtitle_y_position = video_height* 1 / 2
         
-        # 3. Define the Scaling Function for Text Resizing
+        # Define the Scaling Function for Text Resizing
         def resize(t):
             # Define starting and ending scale factors
             start_scale = 0.8
@@ -108,7 +108,7 @@ def create_subtitle_clips(subtitles: list[Word], videosize, fontsize=95, font='I
             scale_factor = start_scale + t/zoom_duration * (end_scale - start_scale)
             return scale_factor
 
-        # 4. Define the Positioning Function to Center the Text
+        # Define the Positioning Function to Center the Text
         def translate(t):
             # Calculate the current scale at time t
             current_scale = resize(t)
